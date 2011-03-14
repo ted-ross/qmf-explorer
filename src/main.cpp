@@ -2,22 +2,18 @@
 #include <QtGui>
 #include "ui_explorer_main.h"
 
-class QmfExplorer : public QMainWindow {
+class QmfExplorer : public QMainWindow, private Ui::MainWindow {
     //Q_OBJECT
 
   public:
     QmfExplorer(QMainWindow* parent = 0);
-    virtual ~QmfExplorer() {}
 
     //  private slots:
-
-  private:
-    Ui::MainWindow ui;
 };
 
 QmfExplorer::QmfExplorer(QMainWindow* parent) : QMainWindow(parent)
 {
-    ui.setupUi(this);
+    setupUi(this);
 }
 
 int main(int argc, char *argv[])

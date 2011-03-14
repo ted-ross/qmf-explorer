@@ -1,15 +1,5 @@
 
-#include <QtGui>
-#include "ui_explorer_main.h"
-
-class QmfExplorer : public QMainWindow, private Ui::MainWindow {
-    //Q_OBJECT
-
-  public:
-    QmfExplorer(QMainWindow* parent = 0);
-
-    //  private slots:
-};
+#include "main.h"
 
 QmfExplorer::QmfExplorer(QMainWindow* parent) : QMainWindow(parent)
 {

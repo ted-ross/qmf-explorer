@@ -1,17 +1,15 @@
+PROJECT(qmfe)
+FIND_PACKAGE(Qt4 REQUIRED)
 
-include(FindQt4)
-include(UseQt4)
+SET(qmfe_SOURCES main.cpp)
+SET(qmfe_FORMS explorer_main.ui)
 
-if(QT4_FOUND)
-   include_directories(${QT_QTGUI_INCLUDE_DIR})
-else(pcre_FOUND)
-   message(FATAL_ERROR "QT4 header/library not found.")
-endif(QT4_FOUND)
+INCLUDE(${QT_USE_FILE})
+ADD_DEFINITIONS(${QT_DEFINITIONS})
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 
-set(QMFE_SOURCES
-    main.cpp
-    )
+QT4_WRAP_UI(qmfe_FORMS_HEADERS ${qmfe_FORMS})
 
-add_executable(qmfe ${QMFE_SOURCES})
-target_link_libraries(qmfe ${QT_QTGUI_LIBRARY} ${QT_QTCORE_LIBRARY} qmf2 qpidmessaging)
+ADD_EXECUTABLE(qmfe ${qmfe_SOURCES} ${qmfe_FORMS_HEADERS})
+TARGET_LINK_LIBRARIES(qmfe ${QT_LIBRARIES} qmf2 qpidmessaging)
 

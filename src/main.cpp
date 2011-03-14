@@ -1,17 +1,31 @@
 
 #include <QtGui>
+#include "ui_explorer_main.h"
 
-class QmfExplorer {
-public:
-    
+class QmfExplorer : public QMainWindow {
+    //Q_OBJECT
+
+  public:
+    QmfExplorer(QMainWindow* parent = 0);
+    virtual ~QmfExplorer() {}
+
+    //  private slots:
+
+  private:
+    Ui::MainWindow ui;
 };
+
+QmfExplorer::QmfExplorer(QMainWindow* parent) : QMainWindow(parent)
+{
+    ui.setupUi(this);
+}
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    QWidget window;
-    window.resize(750, 800);
-    window.show();
-    window.setWindowTitle(QApplication::translate("qmf", "QMF Explorer"));
+    QMainWindow *window = new QMainWindow;
+    QmfExplorer qe(window);
+
+    qe.show();
     return app.exec();
 }

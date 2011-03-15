@@ -1,9 +1,9 @@
 PROJECT(qmfe)
 FIND_PACKAGE(Qt4 REQUIRED)
 
-SET(qmfe_SOURCES main.cpp)
+SET(qmfe_SOURCES main.cpp qmf-thread.cpp)
 SET(qmfe_FORMS explorer_main.ui)
-SET(qmfe_HEADERS main.h)
+SET(qmfe_HEADERS main.h qmf-thread.h)
 
 INCLUDE(${QT_USE_FILE})
 ADD_DEFINITIONS(${QT_DEFINITIONS})

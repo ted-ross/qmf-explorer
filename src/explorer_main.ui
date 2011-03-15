@@ -68,6 +68,9 @@
     </item>
     <item row="2" column="0">
      <widget class="QTabWidget" name="tabWidget">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="currentIndex">
        <number>0</number>
       </property>
@@ -166,9 +169,9 @@
      <height>23</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuConnection">
+   <widget class="QMenu" name="menuFile">
     <property name="title">
-     <string>Connection</string>
+     <string>File</string>
     </property>
     <addaction name="actionOpen_Localhost"/>
     <addaction name="actionOpen"/>
@@ -176,7 +179,7 @@
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
-   <addaction name="menuConnection"/>
+   <addaction name="menuFile"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpen_Localhost">
@@ -190,6 +193,9 @@
    </property>
   </action>
   <action name="actionClose">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Close</string>
    </property>

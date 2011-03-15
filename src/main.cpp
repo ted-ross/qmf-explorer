@@ -10,6 +10,10 @@ QmfExplorer::QmfExplorer(QMainWindow* parent) : QMainWindow(parent)
     connect(qmf, SIGNAL(connectionStatusChanged(QString)), label_connection_status, SLOT(setText(QString)));
     connect(actionOpen_Localhost, SIGNAL(triggered()), qmf, SLOT(connect_localhost()));
     connect(actionClose, SIGNAL(triggered()), qmf, SLOT(disconnect()));
+    connect(qmf, SIGNAL(isConnected(bool)), tabWidget, SLOT(setEnabled(bool)));
+    connect(qmf, SIGNAL(isConnected(bool)), actionOpen_Localhost, SLOT(setDisabled(bool)));
+    connect(qmf, SIGNAL(isConnected(bool)), actionOpen, SLOT(setDisabled(bool)));
+    connect(qmf, SIGNAL(isConnected(bool)), actionClose, SLOT(setEnabled(bool)));
 }
 
 

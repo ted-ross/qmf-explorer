@@ -23,6 +23,7 @@ public slots:
 
 signals:
     void connectionStatusChanged(const QString& text);
+    void isConnected(bool);
 
 protected:
     void run();

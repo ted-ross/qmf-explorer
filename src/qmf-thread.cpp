@@ -51,12 +51,14 @@ void QmfThread::run()
                 //
                 // Process/emit the event
                 //
+                std::cout << "Session Event: " << event.getType() << std::endl;
             }
 
             {
                 QMutexLocker locker(&lock);
                 if (command_queue.size() > 0) {
                     Command command(command_queue.front());
+                    command_queue.pop_front();
                     if (!command.connect) {
                         emit connectionStatusChanged("QMF Session Closing...");
                         sess.close();
@@ -64,6 +66,7 @@ void QmfThread::run()
                         conn.close();
                         emit connectionStatusChanged("Connection Closed");
                         connected = false;
+                        emit isConnected(false);
                     }
                 }
             }
@@ -81,6 +84,7 @@ void QmfThread::run()
                         sess = qmf::ConsoleSession(conn, command.qmf_options);
                         sess.open();
                         connected = true;
+                        emit isConnected(true);
 
                         std::stringstream line;
                         line << "Connected to url: " << command.url;

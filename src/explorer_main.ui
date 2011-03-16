@@ -115,6 +115,16 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="object_tab">
+       <attribute name="title">
+        <string>Objects</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_5">
+        <item row="0" column="0">
+         <widget class="QTreeView" name="treeView_2"/>
+        </item>
+       </layout>
+      </widget>
       <widget class="QWidget" name="event_tab">
        <attribute name="title">
         <string>Events</string>
@@ -143,16 +153,6 @@
            </property>
           </column>
          </widget>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="object_tab">
-       <attribute name="title">
-        <string>Objects</string>
-       </attribute>
-       <layout class="QGridLayout" name="gridLayout_5">
-        <item row="0" column="0">
-         <widget class="QTreeView" name="treeView_2"/>
         </item>
        </layout>
       </widget>

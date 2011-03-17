@@ -18,19 +18,30 @@
  */
 
 #include "main.h"
+#include <iostream>
 
 QmfExplorer::QmfExplorer(QMainWindow* parent) : QMainWindow(parent)
 {
     setupUi(this);
-    qmf = new QmfThread(this);
+
+    agentModel = new AgentModel(this);
+    treeView_agents->setModel(agentModel);
+
+    qmf = new QmfThread(this, agentModel);
     qmf->start();
     connect(qmf, SIGNAL(connectionStatusChanged(QString)), label_connection_status, SLOT(setText(QString)));
     connect(actionOpen_Localhost, SIGNAL(triggered()), qmf, SLOT(connect_localhost()));
     connect(actionClose, SIGNAL(triggered()), qmf, SLOT(disconnect()));
+
+    //
+    // Create linkages to enable and disable main-window components based on the connection status.
+    //
     connect(qmf, SIGNAL(isConnected(bool)), tabWidget, SLOT(setEnabled(bool)));
     connect(qmf, SIGNAL(isConnected(bool)), actionOpen_Localhost, SLOT(setDisabled(bool)));
     connect(qmf, SIGNAL(isConnected(bool)), actionOpen, SLOT(setDisabled(bool)));
     connect(qmf, SIGNAL(isConnected(bool)), actionClose, SLOT(setEnabled(bool)));
+
+    connect(qmf, SIGNAL(newAgent()), agentModel, SLOT(safeAddAgent()));
 }
 
 

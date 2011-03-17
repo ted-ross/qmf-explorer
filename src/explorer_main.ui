@@ -26,7 +26,7 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>Connection:</string>
+         <string>Connection Status:</string>
         </property>
        </widget>
       </item>
@@ -80,28 +80,7 @@
        </attribute>
        <layout class="QGridLayout" name="gridLayout_3">
         <item row="0" column="0">
-         <widget class="QTableWidget" name="tableWidget_2">
-          <column>
-           <property name="text">
-            <string>Vendor</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Product</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Instance</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Epoch</string>
-           </property>
-          </column>
-         </widget>
+         <widget class="QTreeView" name="treeView_agents"/>
         </item>
        </layout>
       </widget>

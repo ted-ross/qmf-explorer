@@ -24,6 +24,8 @@
 #include <QWaitCondition>
 #include <qpid/messaging/Connection.h>
 #include <qmf/ConsoleSession.h>
+#include <qmf/ConsoleEvent.h>
+#include "agent-model.h"
 #include <sstream>
 #include <deque>
 
@@ -31,7 +33,7 @@ class QmfThread : public QThread {
     Q_OBJECT
 
 public:
-    QmfThread(QObject* parent);
+    QmfThread(QObject* parent, AgentModel *agents);
     void cancel();
     void connect(const std::string& url, const std::string& conn_options, const std::string& qmf_options);
 
@@ -40,8 +42,9 @@ public slots:
     void disconnect();
 
 signals:
-    void connectionStatusChanged(const QString& text);
+    void connectionStatusChanged(const QString&);
     void isConnected(bool);
+    void newAgent();
 
 protected:
     void run();
@@ -65,6 +68,12 @@ private:
     bool cancelled;
     bool connected;
     command_queue_t command_queue;
+
+    AgentModel *agentModel;
+
+    void setupAgents();
+    void handleAgentAdd(const qmf::ConsoleEvent&);
+    void handleAgentDel(const qmf::ConsoleEvent&);
 };
 
 #endif

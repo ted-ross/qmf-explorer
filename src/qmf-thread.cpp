@@ -18,12 +18,12 @@
  */
 
 #include "qmf-thread.h"
-#include <qmf/ConsoleEvent.h>
 #include <qpid/messaging/exceptions.h>
 #include <iostream>
 #include <string>
 
-QmfThread::QmfThread(QObject* parent) : QThread(parent), cancelled(false), connected(false)
+QmfThread::QmfThread(QObject* parent, AgentModel *agents) :
+    QThread(parent), cancelled(false), connected(false), agentModel(agents)
 {
 }
 
@@ -58,18 +58,40 @@ void QmfThread::disconnect()
 }
 
 
+void QmfThread::setupAgents()
+{
+}
+
+
+void QmfThread::handleAgentAdd(const qmf::ConsoleEvent& event)
+{
+    agentModel->addAgent(event.getAgent());
+    emit newAgent();
+}
+
+
+void QmfThread::handleAgentDel(const qmf::ConsoleEvent& event)
+{
+}
+
+
 void QmfThread::run()
 {
-    emit connectionStatusChanged("Connection Closed");
+    emit connectionStatusChanged("Closed");
+    setupAgents();
 
     while(true) {
         if (connected) {
             qmf::ConsoleEvent event;
             if (sess.nextEvent(event, qpid::messaging::Duration::SECOND)) {
                 //
-                // Process/emit the event
+                // Process the event
                 //
-                std::cout << "Session Event: " << event.getType() << std::endl;
+                switch (event.getType()) {
+                case qmf::CONSOLE_AGENT_ADD : handleAgentAdd(event); break;
+                case qmf::CONSOLE_AGENT_DEL : handleAgentDel(event); break;
+                default: break;
+                }
             }
 
             {
@@ -80,9 +102,9 @@ void QmfThread::run()
                     if (!command.connect) {
                         emit connectionStatusChanged("QMF Session Closing...");
                         sess.close();
-                        emit connectionStatusChanged("Connection Closing...");
+                        emit connectionStatusChanged("Closing...");
                         conn.close();
-                        emit connectionStatusChanged("Connection Closed");
+                        emit connectionStatusChanged("Closed");
                         connected = false;
                         emit isConnected(false);
                     }
@@ -101,15 +123,16 @@ void QmfThread::run()
                         conn.open();
                         sess = qmf::ConsoleSession(conn, command.qmf_options);
                         sess.open();
+                        sess.setAgentFilter("[]");
                         connected = true;
                         emit isConnected(true);
 
                         std::stringstream line;
-                        line << "Connected to url: " << command.url;
+                        line << "Operational (URL: " << command.url << ")";
                         emit connectionStatusChanged(line.str().c_str());
                     } catch(qpid::messaging::MessagingException& ex) {
                         std::stringstream line;
-                        line << "Error Opening QMF Session: " << ex.what();
+                        line << "QMF Session Failed: " << ex.what();
                         emit connectionStatusChanged(line.str().c_str());
                     }
             }

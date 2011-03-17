@@ -20,20 +20,23 @@
  */
 
 #include <QtGui>
+#include <qmf/ConsoleEvent.h>
 #include "ui_explorer_main.h"
 #include "qmf-thread.h"
+#include "agent-model.h"
 
 class QmfExplorer : public QMainWindow, private Ui::MainWindow {
     Q_OBJECT
 
-  public:
+public:
     QmfExplorer(QMainWindow* parent = 0);
     ~QmfExplorer();
 
-  public slots:
+public slots:
 
-  private:
-    QmfThread* qmf;
+private:
+    QmfThread *qmf;
+    AgentModel *agentModel;
 };
 
 #endif

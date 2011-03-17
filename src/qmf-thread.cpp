@@ -65,8 +65,8 @@ void QmfThread::setupAgents()
 
 void QmfThread::handleAgentAdd(const qmf::ConsoleEvent& event)
 {
-    agentModel->addAgent(event.getAgent());
-    emit newAgent();
+    //agentModel->addAgent(event.getAgent());
+    emit newAgent(event.getAgent());
 }
 
 

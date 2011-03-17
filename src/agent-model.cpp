@@ -31,22 +31,6 @@ AgentModel::AgentModel(QObject* parent) : QAbstractItemModel(parent), nextId(1)
 
 void AgentModel::addAgent(const qmf::Agent& agent)
 {
-    QMutexLocker locker(&lock);
-    addAgentQueue.push_back(agent);
-}
-
-
-void AgentModel::safeAddAgent()
-{
-    qmf::Agent agent;
-    {
-        QMutexLocker locker(&lock);
-        if (addAgentQueue.empty())
-            return;
-        agent = addAgentQueue.front();
-        addAgentQueue.pop_front();
-    }
-
     int rowCount;
     const std::string& vendor(agent.getVendor());
     const std::string& product(agent.getProduct());
@@ -129,12 +113,8 @@ void AgentModel::delAgent(const qmf::Agent&)
 
 int AgentModel::rowCount(const QModelIndex &parent) const
 {
-    QMutexLocker locker(&lock);
-
-    if (!parent.isValid()) {
-        cout << "[AgentModel::rowCount] vendor rows: " << vendors.size() << endl;
+    if (!parent.isValid())
         return (int) vendors.size();
-    }
 
     quint32 id(parent.internalId());
     IndexMap::const_iterator iter(linkage.find(id));
@@ -145,11 +125,9 @@ int AgentModel::rowCount(const QModelIndex &parent) const
 
     switch (ai->nodeType) {
     case NODE_VENDOR:
-        cout << "[AgentModel::rowCount] Product rows:" << ai->children.size() << " id:" << ai->id << endl;
         return (int) ai->children.size();
 
     case NODE_PRODUCT:
-        cout << "[AgentModel::rowCount] Instance rows:" << ai->agents.size() << " id:" << ai->id << endl;
         return (int) ai->agents.size();
     }
 
@@ -159,7 +137,6 @@ int AgentModel::rowCount(const QModelIndex &parent) const
 
 int AgentModel::columnCount(const QModelIndex &parent) const
 {
-    cout << "[AgentModel::columnCount]" << endl;
     return 1;
 }
 
@@ -191,28 +168,12 @@ QVariant AgentModel::data(const QModelIndex &index, int role) const
 
 QVariant AgentModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-#if 0
-    if (role != Qt::DisplayRole)
-        return QVariant();
-
-    if (orientation != Qt::Horizontal)
-        return QVariant();
-
-    switch (section) {
-    case 0: return QString("Vendor");
-    case 1: return QString("Product");
-    case 2: return QString("Instance");
-    case 3: return QString("Epoch");
-    }
-#endif
     return QVariant();
 }
 
 
 QModelIndex AgentModel::parent(const QModelIndex& index) const
 {
-    cout << "[AgentModel::parent] valid:" << (char) (index.isValid() ? 'Y' : 'N') << " id:" << index.internalId() << " row:" << index.row() << " col:" << index.column() << endl;
-
     if (!index.isValid())
         return QModelIndex();
 

@@ -30,14 +30,14 @@
 #include <deque>
 #include <boost/shared_ptr.hpp>
 
+Q_DECLARE_METATYPE(qmf::Agent);
+
 class AgentModel : public QAbstractItemModel {
     Q_OBJECT
 
 public:
     AgentModel(QObject* parent = 0);
 
-    void addAgent(const qmf::Agent&);
-    void delAgent(const qmf::Agent&);
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
@@ -47,7 +47,8 @@ public:
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
 
 public slots:
-    void safeAddAgent();
+    void addAgent(const qmf::Agent&);
+    void delAgent(const qmf::Agent&);
 
 private:
     typedef enum { NODE_VENDOR, NODE_PRODUCT } NodeType;
@@ -68,11 +69,9 @@ private:
         AgentList agents;
     };
 
-    mutable QMutex lock;
     IndexList vendors;
     IndexMap linkage;
     quint32 nextId;
-    std::deque<qmf::Agent> addAgentQueue;
 };
 
 #endif

@@ -44,7 +44,7 @@ public slots:
 signals:
     void connectionStatusChanged(const QString&);
     void isConnected(bool);
-    void newAgent();
+    void newAgent(const qmf::Agent&);
 
 protected:
     void run();

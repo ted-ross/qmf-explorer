@@ -24,6 +24,8 @@ QmfExplorer::QmfExplorer(QMainWindow* parent) : QMainWindow(parent)
 {
     setupUi(this);
 
+    qRegisterMetaType<qmf::Agent>();
+
     agentModel = new AgentModel(this);
     treeView_agents->setModel(agentModel);
 
@@ -41,7 +43,7 @@ QmfExplorer::QmfExplorer(QMainWindow* parent) : QMainWindow(parent)
     connect(qmf, SIGNAL(isConnected(bool)), actionOpen, SLOT(setDisabled(bool)));
     connect(qmf, SIGNAL(isConnected(bool)), actionClose, SLOT(setEnabled(bool)));
 
-    connect(qmf, SIGNAL(newAgent()), agentModel, SLOT(safeAddAgent()));
+    connect(qmf, SIGNAL(newAgent(qmf::Agent)), agentModel, SLOT(addAgent(qmf::Agent)));
 }
 
 

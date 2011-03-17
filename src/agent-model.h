@@ -59,6 +59,8 @@ private:
 
     struct AgentIndex {
         quint32 id;
+        int row;
+        int column;
         NodeType nodeType;
         std::string text;
         AgentIndexPtr parent;

@@ -41,6 +41,8 @@ void AgentModel::safeAddAgent()
     qmf::Agent agent;
     {
         QMutexLocker locker(&lock);
+        if (addAgentQueue.empty())
+            return;
         agent = addAgentQueue.front();
         addAgentQueue.pop_front();
     }
@@ -50,6 +52,9 @@ void AgentModel::safeAddAgent()
     const std::string& product(agent.getProduct());
     const std::string& instance(agent.getInstance());
 
+    AgentIndexPtr vptr;
+    AgentIndexPtr pptr;
+
     IndexList::iterator iter(vendors.begin());
     rowCount = 0;
     while (iter != vendors.end() && vendor > (*iter)->text) {
@@ -58,7 +63,6 @@ void AgentModel::safeAddAgent()
     }
 
     if (iter == vendors.end() || vendor != (*iter)->text) {
-        cout << "[AgentModel::addAgent] Inserting Vendor '" << vendor << "' at " << rowCount << endl;
         //
         // We need to insert a new vendor row into the model
         //
@@ -67,22 +71,54 @@ void AgentModel::safeAddAgent()
         //
         // Allocate a new AgentIndex
         //
-        AgentIndexPtr ai(new AgentIndex());
-        ai->id = nextId++;
-        ai->nodeType = NODE_VENDOR;
-        ai->text = vendor;
-        linkage[ai->id] = ai;
+        vptr.reset(new AgentIndex());
+        vptr->id = nextId++;
+        vptr->row = rowCount;
+        vptr->column = 0;
+        vptr->nodeType = NODE_VENDOR;
+        vptr->text = vendor;
+        linkage[vptr->id] = vptr;
 
         if (iter == vendors.end())
-            vendors.push_back(ai);
+            vendors.push_back(vptr);
         else
-            vendors.insert(iter, ai);
+            vendors.insert(iter, vptr);
         endInsertRows();
+    } else
+        vptr = *iter;
+
+    iter = vptr->children.begin();
+    rowCount = 0;
+    while (iter != vptr->children.end() && product > (*iter)->text) {
+        iter++;
+        rowCount++;
     }
 
-    cout << "Vendor List:" << endl;
-    for (iter = vendors.begin(); iter != vendors.end(); iter++)
-        cout << "    " << (*iter)->text << " id:" << (*iter)-> id << endl;
+    if (iter == vptr->children.end() || product != (*iter)->text) {
+        //
+        // We need to insert a new product into the vendor
+        //
+        beginInsertRows(createIndex(vptr->row, vptr->column, vptr->id), rowCount, rowCount);
+
+        //
+        // Allocate a new AgentIndex
+        //
+        pptr.reset(new AgentIndex());
+        pptr->id = nextId++;
+        pptr->row = rowCount;
+        pptr->column = 0;
+        pptr->nodeType = NODE_PRODUCT;
+        pptr->text = product;
+        pptr->parent = vptr;
+        linkage[pptr->id] = pptr;
+
+        if (iter == vptr->children.end())
+            vptr->children.push_back(pptr);
+        else
+            vptr->children.insert(iter, pptr);
+        endInsertRows();
+    } else
+        pptr = *iter;
 }
 
 
@@ -146,11 +182,8 @@ QVariant AgentModel::data(const QModelIndex &index, int role) const
     const AgentIndexPtr ai(iter->second);
     switch (ai->nodeType) {
     case NODE_VENDOR:
-        cout << "[AgentModel::data] Returning vendor name '" << ai->text << "' for id:" << ai->id << " row:" << index.row() << endl;
-        return QString(ai->text.c_str());
-        break;
-
     case NODE_PRODUCT:
+        return QString(ai->text.c_str());
         break;
     }
 }
@@ -158,6 +191,7 @@ QVariant AgentModel::data(const QModelIndex &index, int role) const
 
 QVariant AgentModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
+#if 0
     if (role != Qt::DisplayRole)
         return QVariant();
 
@@ -170,7 +204,7 @@ QVariant AgentModel::headerData(int section, Qt::Orientation orientation, int ro
     case 2: return QString("Instance");
     case 3: return QString("Epoch");
     }
-
+#endif
     return QVariant();
 }
 
@@ -178,15 +212,26 @@ QVariant AgentModel::headerData(int section, Qt::Orientation orientation, int ro
 QModelIndex AgentModel::parent(const QModelIndex& index) const
 {
     cout << "[AgentModel::parent] valid:" << (char) (index.isValid() ? 'Y' : 'N') << " id:" << index.internalId() << " row:" << index.row() << " col:" << index.column() << endl;
+
+    if (!index.isValid())
+        return QModelIndex();
+
+    quint32 id(index.internalId());
+    IndexMap::const_iterator iter(linkage.find(id));
+    if (iter == linkage.end())
+        return QModelIndex();
+
+    AgentIndexPtr ptr(iter->second);
+    if (ptr->nodeType == NODE_PRODUCT)
+        return createIndex(ptr->row, ptr->column, ptr->parent->id);
+
     return QModelIndex();
 }
 
 
 QModelIndex AgentModel::index(int row, int column, const QModelIndex &parent) const
 {
-    cout << "[AgentModel::index] row:" << row << " col:" << column << " valid-parent:" <<
-        (char) (parent.isValid() ? 'Y' : 'N') << endl;
-    if (!parent.isValid() && row <= vendors.size()) {
+    if (!parent.isValid() && row < vendors.size()) {
         //
         // Return the index of the vendor indicated by the row number.
         //
@@ -197,8 +242,29 @@ QModelIndex AgentModel::index(int row, int column, const QModelIndex &parent) co
             count++;
         }
 
-        cout << "[AgentModel::index]     id:" << (*iter)->id << endl;
+        return createIndex(row, column, (*iter)->id);
+    }
 
+    quint32 id(parent.internalId());
+    IndexMap::const_iterator iter(linkage.find(id));
+    if (iter == linkage.end())
+        return QModelIndex();
+
+    AgentIndexPtr ptr(iter->second);
+
+    if (ptr->nodeType == NODE_VENDOR) {
+        if (row >= ptr->children.size())
+            return QModelIndex();
+
+        int count(0);
+        IndexList::const_iterator iter(ptr->children.begin());
+        while (count < row) {
+            iter++;
+            count++;
+        }
+
+        (*iter)->row = row;
+        (*iter)->column = column;
         return createIndex(row, column, (*iter)->id);
     }
 

@@ -82,6 +82,9 @@
         <item row="0" column="0">
          <widget class="QTreeView" name="treeView_agents"/>
         </item>
+        <item row="0" column="1">
+         <widget class="QTableView" name="tableView_agentDetails"/>
+        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="schema_tab">

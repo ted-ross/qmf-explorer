@@ -51,27 +51,28 @@ public slots:
     void delAgent(const qmf::Agent&);
 
 private:
-    typedef enum { NODE_VENDOR, NODE_PRODUCT } NodeType;
+    typedef enum { NODE_VENDOR, NODE_PRODUCT, NODE_INSTANCE } NodeType;
     struct AgentIndex;
     typedef boost::shared_ptr<AgentIndex> AgentIndexPtr;
     typedef std::map<quint32, AgentIndexPtr> IndexMap;
     typedef std::list<AgentIndexPtr> IndexList;
-    typedef std::list<qmf::Agent> AgentList;
 
     struct AgentIndex {
         quint32 id;
         int row;
-        int column;
         NodeType nodeType;
         std::string text;
         AgentIndexPtr parent;
         IndexList children;
-        AgentList agents;
+        qmf::Agent agent;
     };
 
     IndexList vendors;
     IndexMap linkage;
     quint32 nextId;
+
+    void renumber(IndexList&);
+    AgentIndexPtr findOrInsertNode(IndexList&, NodeType, AgentIndexPtr, const std::string&, const qmf::Agent&, QModelIndex);
 };
 
 #endif

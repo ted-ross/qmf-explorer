@@ -29,80 +29,66 @@ AgentModel::AgentModel(QObject* parent) : QAbstractItemModel(parent), nextId(1)
 }
 
 
+void AgentModel::renumber(IndexList& list)
+{
+    int sequence = 0;
+    for (IndexList::iterator iter = list.begin(); iter != list.end(); iter++)
+        (*iter)->row = sequence++;
+}
+
+
+AgentModel::AgentIndexPtr
+AgentModel::findOrInsertNode(IndexList& list, NodeType nodeType, AgentIndexPtr parent,
+                             const std::string& text, const qmf::Agent& agent, QModelIndex parentIndex)
+{
+    AgentIndexPtr node;
+    int rowCount;
+    std::string insertText(text.empty() ? agent.getInstance() : text);
+
+    IndexList::iterator iter(list.begin());
+    rowCount = 0;
+    while (iter != list.end() && insertText > (*iter)->text) {
+        iter++;
+        rowCount++;
+    }
+
+    if (iter == list.end() || insertText != (*iter)->text) {
+        //
+        // A new data record needs to be inserted in-order in the list.
+        //
+        beginInsertRows(parentIndex, rowCount, rowCount);
+        node.reset(new AgentIndex());
+        node->id = nextId++;
+        node->nodeType = nodeType;
+        node->text = insertText;
+        node->parent = parent;
+        linkage[node->id] = node;
+
+        if (iter == list.end())
+            list.push_back(node);
+        else
+            list.insert(iter, node);
+        renumber(list);
+        endInsertRows();
+    } else
+        node = *iter;
+
+    return node;
+}
+
+
 void AgentModel::addAgent(const qmf::Agent& agent)
 {
-    int rowCount;
     const std::string& vendor(agent.getVendor());
     const std::string& product(agent.getProduct());
     const std::string& instance(agent.getInstance());
 
-    AgentIndexPtr vptr;
-    AgentIndexPtr pptr;
-
-    IndexList::iterator iter(vendors.begin());
-    rowCount = 0;
-    while (iter != vendors.end() && vendor > (*iter)->text) {
-        iter++;
-        rowCount++;
-    }
-
-    if (iter == vendors.end() || vendor != (*iter)->text) {
-        //
-        // We need to insert a new vendor row into the model
-        //
-        beginInsertRows(QModelIndex(), rowCount, rowCount);
-
-        //
-        // Allocate a new AgentIndex
-        //
-        vptr.reset(new AgentIndex());
-        vptr->id = nextId++;
-        vptr->row = rowCount;
-        vptr->column = 0;
-        vptr->nodeType = NODE_VENDOR;
-        vptr->text = vendor;
-        linkage[vptr->id] = vptr;
-
-        if (iter == vendors.end())
-            vendors.push_back(vptr);
-        else
-            vendors.insert(iter, vptr);
-        endInsertRows();
-    } else
-        vptr = *iter;
-
-    iter = vptr->children.begin();
-    rowCount = 0;
-    while (iter != vptr->children.end() && product > (*iter)->text) {
-        iter++;
-        rowCount++;
-    }
-
-    if (iter == vptr->children.end() || product != (*iter)->text) {
-        //
-        // We need to insert a new product into the vendor
-        //
-        beginInsertRows(createIndex(vptr->row, vptr->column, vptr->id), rowCount, rowCount);
-
-        //
-        // Allocate a new AgentIndex
-        //
-        pptr.reset(new AgentIndex());
-        pptr->id = nextId++;
-        pptr->row = rowCount;
-        pptr->column = 0;
-        pptr->nodeType = NODE_PRODUCT;
-        pptr->text = product;
-        pptr->parent = vptr;
-        linkage[pptr->id] = pptr;
-
-        if (iter == vptr->children.end())
-            vptr->children.push_back(pptr);
-        else
-            vptr->children.insert(iter, pptr);
-        endInsertRows();
-    } else
-        pptr = *iter;
+    AgentIndexPtr vptr(findOrInsertNode(vendors, NODE_VENDOR, AgentIndexPtr(),
+                                        vendor, agent, QModelIndex()));
+    AgentIndexPtr pptr(findOrInsertNode(vptr->children, NODE_PRODUCT, vptr,
+                                        product, agent, createIndex(vptr->row, 0, vptr->id)));
+    AgentIndexPtr iptr(findOrInsertNode(pptr->children, NODE_INSTANCE, pptr,
+                                        instance, agent, createIndex(pptr->row, 0, pptr->id)));
 }
 
 
@@ -113,24 +99,33 @@ void AgentModel::delAgent(const qmf::Agent&)
 
 int AgentModel::rowCount(const QModelIndex &parent) const
 {
+    //
+    // If the parent is invalid (top-level), return the number of vendors.
+    //
     if (!parent.isValid())
         return (int) vendors.size();
 
+    //
+    // Get the data record linked to the ID.
+    //
     quint32 id(parent.internalId());
     IndexMap::const_iterator iter(linkage.find(id));
     if (iter == linkage.end())
         return 0;
+    const AgentIndexPtr ptr(iter->second);
 
-    const AgentIndexPtr ai(iter->second);
-
-    switch (ai->nodeType) {
+    //
+    // For parents that are vendor or product, return the number of children.
+    //
+    switch (ptr->nodeType) {
     case NODE_VENDOR:
-        return (int) ai->children.size();
-
     case NODE_PRODUCT:
-        return (int) ai->agents.size();
+        return (int) ptr->children.size();
     }
 
+    //
+    // For instance nodes, return 0 because there are no children.
+    //
     return 0;
 }
 
@@ -149,20 +144,21 @@ QVariant AgentModel::data(const QModelIndex &index, int role) const
     if (!index.isValid())
         return QVariant();
 
-    quint32 id(index.internalId());
-    IndexMap::const_iterator iter(linkage.find(id));
-    if (iter == linkage.end()) {
-        cout << "[AgentModel::data] Index with invalid ID: " << id << endl;
-        return QVariant();
-    }
+    //
+    // Note that we don't look at the row number in this function.  The index structure
+    // is defined such that the internalId is sufficient to identify the data record being
+    // interrogated.
+    //
 
-    const AgentIndexPtr ai(iter->second);
-    switch (ai->nodeType) {
-    case NODE_VENDOR:
-    case NODE_PRODUCT:
-        return QString(ai->text.c_str());
-        break;
-    }
+    //
+    // Get the data record linked to the ID.
+    //
+    quint32 id(index.internalId());
+    IndexMap::const_iterator liter(linkage.find(id));
+    if (liter == linkage.end())
+        return QVariant();
+    const AgentIndexPtr ptr(liter->second);
+    return QString(ptr->text.c_str());
 }
 
 
@@ -178,55 +174,74 @@ QModelIndex AgentModel::parent(const QModelIndex& index) const
         return QModelIndex();
 
     quint32 id(index.internalId());
+
+    //
+    // Get the linked record
+    //
     IndexMap::const_iterator iter(linkage.find(id));
     if (iter == linkage.end())
         return QModelIndex();
-
     AgentIndexPtr ptr(iter->second);
-    if (ptr->nodeType == NODE_PRODUCT)
-        return createIndex(ptr->row, ptr->column, ptr->parent->id);
 
-    return QModelIndex();
+    //
+    // Handle the vendor case
+    //
+    if (ptr->nodeType == NODE_VENDOR)
+        return QModelIndex();
+
+    //
+    // Handle the product and instance level cases
+    //
+    return createIndex(ptr->parent->row, 0, ptr->parent->id);
 }
 
 
 QModelIndex AgentModel::index(int row, int column, const QModelIndex &parent) const
 {
-    if (!parent.isValid() && row < vendors.size()) {
+    int count;
+    IndexList::const_iterator iter;
+
+    if (!parent.isValid()) {
         //
-        // Return the index of the vendor indicated by the row number.
+        // Handle the vendor-level case
         //
-        int count(0);
-        IndexList::const_iterator iter(vendors.begin());
-        while (count < row) {
-            iter++;
+        count = 0;
+        iter = vendors.begin();
+        while (iter != vendors.end() && count < row) {
             count++;
+            iter++;
         }
 
-        return createIndex(row, column, (*iter)->id);
+        if (iter == vendors.end())
+            return QModelIndex();
+        return createIndex(row, 0, (*iter)->id);
     }
 
+    //
+    // Get the data record linked to the ID.
+    //
     quint32 id(parent.internalId());
-    IndexMap::const_iterator iter(linkage.find(id));
-    if (iter == linkage.end())
+    IndexMap::const_iterator link = linkage.find(id);
+    if (link == linkage.end())
         return QModelIndex();
+    AgentIndexPtr ptr(link->second);
 
-    AgentIndexPtr ptr(iter->second);
-
-    if (ptr->nodeType == NODE_VENDOR) {
-        if (row >= ptr->children.size())
-            return QModelIndex();
-
-        int count(0);
-        IndexList::const_iterator iter(ptr->children.begin());
+    //
+    // Create an index for the child data record.
+    //
+    switch (ptr->nodeType) {
+    case NODE_VENDOR:
+    case NODE_PRODUCT:
+        count = 0;
+        iter = ptr->children.begin();
         while (count < row) {
             iter++;
             count++;
         }
 
-        (*iter)->row = row;
-        (*iter)->column = column;
-        return createIndex(row, column, (*iter)->id);
+        if (iter == vendors.end())
+            return QModelIndex();
+        return createIndex(row, 0, (*iter)->id);
     }
 
     return QModelIndex();

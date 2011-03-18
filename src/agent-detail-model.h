@@ -1,5 +1,5 @@
-#ifndef _qe_agent_model_h
-#define _qe_agent_model_h
+#ifndef _qe_agent_detail_model_h
+#define _qe_agent_detail_model_h
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -21,23 +21,16 @@
 
 #include <QAbstractItemModel>
 #include <QModelIndex>
-#include <QMutex>
+#include <QStringList>
 #include <qmf/Agent.h>
 #include <sstream>
 #include <string>
-#include <map>
-#include <list>
-#include <deque>
-#include <boost/shared_ptr.hpp>
 
-Q_DECLARE_METATYPE(qmf::Agent);
-
-class AgentModel : public QAbstractItemModel {
+class AgentDetailModel : public QAbstractItemModel {
     Q_OBJECT
 
 public:
-    AgentModel(QObject* parent = 0);
-
+    AgentDetailModel(QObject* parent = 0);
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
@@ -47,38 +40,12 @@ public:
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
 
 public slots:
-    void addAgent(const qmf::Agent&);
-    void delAgent(const qmf::Agent&);
+    void newAgent(const qmf::Agent&);
     void clear();
-    void selected(const QModelIndex&);
-
-signals:
-    void instSelected(const qmf::Agent&);
 
 private:
-    typedef enum { NODE_VENDOR, NODE_PRODUCT, NODE_INSTANCE } NodeType;
-    struct AgentIndex;
-    typedef boost::shared_ptr<AgentIndex> AgentIndexPtr;
-    typedef std::map<quint32, AgentIndexPtr> IndexMap;
-    typedef std::list<AgentIndexPtr> IndexList;
-
-    struct AgentIndex {
-        quint32 id;
-        int row;
-        NodeType nodeType;
-        std::string text;
-        AgentIndexPtr parent;
-        IndexList children;
-        qmf::Agent agent;
-    };
-
-    IndexList vendors;
-    IndexMap linkage;
-    quint32 nextId;
-
-    void renumber(IndexList&);
-    AgentIndexPtr findOrInsertNode(IndexList&, NodeType, AgentIndexPtr, const std::string&,
-                                   const qmf::Agent&, QModelIndex, IndexList::iterator&);
+    QStringList keys;
+    QStringList values;
 };
 
 #endif

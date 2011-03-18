@@ -63,6 +63,7 @@ AgentModel::findOrInsertNode(IndexList& list, NodeType nodeType, AgentIndexPtr p
         node->nodeType = nodeType;
         node->text = insertText;
         node->parent = parent;
+        node->agent = agent;
         linkage[node->id] = node;
 
         if (iter == list.end())
@@ -124,7 +125,7 @@ void AgentModel::delAgent(const qmf::Agent& agent)
     endRemoveRows();
 
     if (pptr->children.size() == 0) {
-        beginRemoveRows(pindex, pptr->id, pptr->id);
+        beginRemoveRows(pindex, pptr->row, pptr->row);
         vptr->children.erase(piter);
         linkage.erase(linkage.find(pptr->id));
         renumber(vptr->children);
@@ -143,8 +144,29 @@ void AgentModel::delAgent(const qmf::Agent& agent)
 
 void AgentModel::clear()
 {
+    beginRemoveRows(QModelIndex(), 0, vendors.size() - 1);
     vendors.clear();
     linkage.clear();
+    endRemoveRows();
+}
+
+
+void AgentModel::selected(const QModelIndex& index)
+{
+    //
+    // Get the data record linked to the ID.
+    //
+    quint32 id(index.internalId());
+    IndexMap::const_iterator iter(linkage.find(id));
+    if (iter == linkage.end())
+        return;
+    const AgentIndexPtr ptr(iter->second);
+
+    //
+    // The selected tree row is a valid instance.  Relay it outbound.
+    //
+    if (ptr->nodeType == NODE_INSTANCE)
+        emit instSelected(ptr->agent);
 }
 
 
@@ -215,6 +237,8 @@ QVariant AgentModel::data(const QModelIndex &index, int role) const
 
 QVariant AgentModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
+    if (section == 0 && role == Qt::DisplayRole && orientation == Qt::Horizontal)
+        return QString("Agents");
     return QVariant();
 }
 

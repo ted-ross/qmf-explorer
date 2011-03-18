@@ -24,6 +24,7 @@
 #include "ui_explorer_main.h"
 #include "qmf-thread.h"
 #include "agent-model.h"
+#include "agent-detail-model.h"
 
 class QmfExplorer : public QMainWindow, private Ui::MainWindow {
     Q_OBJECT
@@ -35,8 +36,9 @@ public:
 public slots:
 
 private:
-    QmfThread *qmf;
-    AgentModel *agentModel;
+    QmfThread* qmf;
+    AgentModel* agentModel;
+    AgentDetailModel* agentDetail;
 };
 
 #endif

@@ -29,11 +29,24 @@ QmfExplorer::QmfExplorer(QMainWindow* parent) : QMainWindow(parent)
     agentModel = new AgentModel(this);
     treeView_agents->setModel(agentModel);
 
+    agentDetail = new AgentDetailModel(this);
+    tableView_agent_details->setModel(agentDetail);
+
     qmf = new QmfThread(this, agentModel, lineEdit_agent_filter);
     qmf->start();
+
     connect(qmf, SIGNAL(connectionStatusChanged(QString)), label_connection_status, SLOT(setText(QString)));
     connect(actionOpen_Localhost, SIGNAL(triggered()), qmf, SLOT(connect_localhost()));
     connect(actionClose, SIGNAL(triggered()), qmf, SLOT(disconnect()));
+
+    connect(qmf, SIGNAL(newAgent(qmf::Agent)), agentModel, SLOT(addAgent(qmf::Agent)));
+    connect(qmf, SIGNAL(delAgent(qmf::Agent)), agentModel, SLOT(delAgent(qmf::Agent)));
+    connect(qmf, SIGNAL(isConnected(bool)), agentModel, SLOT(clear()));
+
+    connect(pushButton_apply_filter, SIGNAL(pressed()), qmf, SLOT(applyAgentFilter()));
+
+    connect(treeView_agents, SIGNAL(clicked(QModelIndex)), agentModel, SLOT(selected(QModelIndex)));
+    connect(agentModel, SIGNAL(instSelected(qmf::Agent)), agentDetail, SLOT(newAgent(qmf::Agent)));
 
     //
     // Create linkages to enable and disable main-window components based on the connection status.
@@ -42,12 +55,6 @@ QmfExplorer::QmfExplorer(QMainWindow* parent) : QMainWindow(parent)
     connect(qmf, SIGNAL(isConnected(bool)), actionOpen_Localhost, SLOT(setDisabled(bool)));
     connect(qmf, SIGNAL(isConnected(bool)), actionOpen, SLOT(setDisabled(bool)));
     connect(qmf, SIGNAL(isConnected(bool)), actionClose, SLOT(setEnabled(bool)));
-
-    connect(qmf, SIGNAL(newAgent(qmf::Agent)), agentModel, SLOT(addAgent(qmf::Agent)));
-    connect(qmf, SIGNAL(delAgent(qmf::Agent)), agentModel, SLOT(delAgent(qmf::Agent)));
-    connect(qmf, SIGNAL(isConnected(bool)), agentModel, SLOT(clear()));
-
-    connect(pushButton_apply_filter, SIGNAL(pressed()), qmf, SLOT(applyAgentFilter()));
 }
 
 

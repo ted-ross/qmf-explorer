@@ -20,9 +20,21 @@
 PROJECT(qmfe)
 FIND_PACKAGE(Qt4 REQUIRED)
 
-SET(qmfe_SOURCES main.cpp qmf-thread.cpp agent-model.cpp)
 SET(qmfe_FORMS explorer_main.ui)
-SET(qmfe_HEADERS main.h qmf-thread.h agent-model.h)
+
+SET(qmfe_HEADERS
+    main.h
+    qmf-thread.h
+    agent-model.h
+    agent-detail-model.h
+    )
+
+SET(qmfe_SOURCES
+    main.cpp
+    qmf-thread.cpp
+    agent-model.cpp
+    agent-detail-model.cpp
+    )
 
 INCLUDE(${QT_USE_FILE})
 ADD_DEFINITIONS(${QT_DEFINITIONS})
@@ -32,5 +44,5 @@ QT4_WRAP_UI(qmfe_FORMS_HEADERS ${qmfe_FORMS})
 QT4_WRAP_CPP(qmfe_HEADERS_MOC ${qmfe_HEADERS})
 
 ADD_EXECUTABLE(qmfe ${qmfe_SOURCES} ${qmfe_HEADERS_MOC} ${qmfe_FORMS_HEADERS})
-TARGET_LINK_LIBRARIES(qmfe ${QT_LIBRARIES} qmf2 qpidmessaging)
+TARGET_LINK_LIBRARIES(qmfe ${QT_LIBRARIES} qmf2 qpidmessaging qpidtypes)
 

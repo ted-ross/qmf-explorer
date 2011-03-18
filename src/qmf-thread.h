@@ -27,6 +27,7 @@
 #include <qmf/ConsoleSession.h>
 #include <qmf/ConsoleEvent.h>
 #include "agent-model.h"
+#include "object-model.h"
 #include <sstream>
 #include <deque>
 
@@ -34,7 +35,7 @@ class QmfThread : public QThread {
     Q_OBJECT
 
 public:
-    QmfThread(QObject* parent, AgentModel *agents, QLineEdit *agentFilter);
+    QmfThread(QObject* parent, AgentModel* agents, QLineEdit* agentFilter, ObjectModel* objects);
     void cancel();
     void connect(const std::string& url, const std::string& conn_options, const std::string& qmf_options);
 
@@ -72,8 +73,9 @@ private:
     bool connected;
     command_queue_t command_queue;
 
-    AgentModel *agentModel;
+    AgentModel* agentModel;
     QLineEdit* agentFilter;
+    ObjectModel* objectModel;
 };
 
 #endif

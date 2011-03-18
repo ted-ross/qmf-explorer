@@ -25,8 +25,8 @@
 using std::cout;
 using std::endl;
 
-QmfThread::QmfThread(QObject* parent, AgentModel *agents, QLineEdit *f) :
-QThread(parent), cancelled(false), connected(false), agentModel(agents), agentFilter(f)
+QmfThread::QmfThread(QObject* parent, AgentModel* agents, QLineEdit* f, ObjectModel* o) :
+    QThread(parent), cancelled(false), connected(false), agentModel(agents), agentFilter(f), objectModel(o)
 {
     // Intentionally Left Blank
 }

@@ -27,6 +27,8 @@ SET(qmfe_HEADERS
     qmf-thread.h
     agent-model.h
     agent-detail-model.h
+    object-model.h
+    object-detail-model.h
     )
 
 SET(qmfe_SOURCES
@@ -34,6 +36,8 @@ SET(qmfe_SOURCES
     qmf-thread.cpp
     agent-model.cpp
     agent-detail-model.cpp
+    object-model.cpp
+    object-detail-model.cpp
     )
 
 INCLUDE(${QT_USE_FILE})

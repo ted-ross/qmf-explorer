@@ -29,7 +29,7 @@ QmfExplorer::QmfExplorer(QMainWindow* parent) : QMainWindow(parent)
     agentModel = new AgentModel(this);
     treeView_agents->setModel(agentModel);
 
-    qmf = new QmfThread(this, agentModel);
+    qmf = new QmfThread(this, agentModel, lineEdit_agent_filter);
     qmf->start();
     connect(qmf, SIGNAL(connectionStatusChanged(QString)), label_connection_status, SLOT(setText(QString)));
     connect(actionOpen_Localhost, SIGNAL(triggered()), qmf, SLOT(connect_localhost()));
@@ -44,6 +44,10 @@ QmfExplorer::QmfExplorer(QMainWindow* parent) : QMainWindow(parent)
     connect(qmf, SIGNAL(isConnected(bool)), actionClose, SLOT(setEnabled(bool)));
 
     connect(qmf, SIGNAL(newAgent(qmf::Agent)), agentModel, SLOT(addAgent(qmf::Agent)));
+    connect(qmf, SIGNAL(delAgent(qmf::Agent)), agentModel, SLOT(delAgent(qmf::Agent)));
+    connect(qmf, SIGNAL(isConnected(bool)), agentModel, SLOT(clear()));
+
+    connect(pushButton_apply_filter, SIGNAL(pressed()), qmf, SLOT(applyAgentFilter()));
 }
 
 

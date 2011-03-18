@@ -22,6 +22,7 @@
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
+#include <QLineEdit>
 #include <qpid/messaging/Connection.h>
 #include <qmf/ConsoleSession.h>
 #include <qmf/ConsoleEvent.h>
@@ -33,18 +34,20 @@ class QmfThread : public QThread {
     Q_OBJECT
 
 public:
-    QmfThread(QObject* parent, AgentModel *agents);
+    QmfThread(QObject* parent, AgentModel *agents, QLineEdit *agentFilter);
     void cancel();
     void connect(const std::string& url, const std::string& conn_options, const std::string& qmf_options);
 
 public slots:
     void connect_localhost();
     void disconnect();
+    void applyAgentFilter();
 
 signals:
     void connectionStatusChanged(const QString&);
     void isConnected(bool);
     void newAgent(const qmf::Agent&);
+    void delAgent(const qmf::Agent&);
 
 protected:
     void run();
@@ -70,10 +73,7 @@ private:
     command_queue_t command_queue;
 
     AgentModel *agentModel;
-
-    void setupAgents();
-    void handleAgentAdd(const qmf::ConsoleEvent&);
-    void handleAgentDel(const qmf::ConsoleEvent&);
+    QLineEdit* agentFilter;
 };
 
 #endif

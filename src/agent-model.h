@@ -49,6 +49,7 @@ public:
 public slots:
     void addAgent(const qmf::Agent&);
     void delAgent(const qmf::Agent&);
+    void clear();
 
 private:
     typedef enum { NODE_VENDOR, NODE_PRODUCT, NODE_INSTANCE } NodeType;
@@ -72,7 +73,8 @@ private:
     quint32 nextId;
 
     void renumber(IndexList&);
-    AgentIndexPtr findOrInsertNode(IndexList&, NodeType, AgentIndexPtr, const std::string&, const qmf::Agent&, QModelIndex);
+    AgentIndexPtr findOrInsertNode(IndexList&, NodeType, AgentIndexPtr, const std::string&,
+                                   const qmf::Agent&, QModelIndex, IndexList::iterator&);
 };
 
 #endif

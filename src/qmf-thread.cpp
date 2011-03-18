@@ -22,9 +22,13 @@
 #include <iostream>
 #include <string>
 
-QmfThread::QmfThread(QObject* parent, AgentModel *agents) :
-    QThread(parent), cancelled(false), connected(false), agentModel(agents)
+using std::cout;
+using std::endl;
+
+QmfThread::QmfThread(QObject* parent, AgentModel *agents, QLineEdit *f) :
+QThread(parent), cancelled(false), connected(false), agentModel(agents), agentFilter(f)
 {
+    // Intentionally Left Blank
 }
 
 
@@ -58,27 +62,20 @@ void QmfThread::disconnect()
 }
 
 
-void QmfThread::setupAgents()
+void QmfThread::applyAgentFilter()
 {
-}
-
-
-void QmfThread::handleAgentAdd(const qmf::ConsoleEvent& event)
-{
-    //agentModel->addAgent(event.getAgent());
-    emit newAgent(event.getAgent());
-}
-
-
-void QmfThread::handleAgentDel(const qmf::ConsoleEvent& event)
-{
+    if (connected)
+        try {
+            sess.setAgentFilter(agentFilter->text().toStdString());
+        } catch (qmf::QmfException& e) {
+            cout << "Exception: " << e.what() << endl;
+        }
 }
 
 
 void QmfThread::run()
 {
     emit connectionStatusChanged("Closed");
-    setupAgents();
 
     while(true) {
         if (connected) {
@@ -88,8 +85,8 @@ void QmfThread::run()
                 // Process the event
                 //
                 switch (event.getType()) {
-                case qmf::CONSOLE_AGENT_ADD : handleAgentAdd(event); break;
-                case qmf::CONSOLE_AGENT_DEL : handleAgentDel(event); break;
+                case qmf::CONSOLE_AGENT_ADD : emit newAgent(event.getAgent()); break;
+                case qmf::CONSOLE_AGENT_DEL : emit delAgent(event.getAgent()); break;
                 default: break;
                 }
             }
@@ -123,7 +120,9 @@ void QmfThread::run()
                         conn.open();
                         sess = qmf::ConsoleSession(conn, command.qmf_options);
                         sess.open();
-                        sess.setAgentFilter("[]");
+                        try {
+                            sess.setAgentFilter(agentFilter->text().toStdString());
+                        } catch (std::exception&) {}
                         connected = true;
                         emit isConnected(true);
 

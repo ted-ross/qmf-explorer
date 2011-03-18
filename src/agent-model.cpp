@@ -39,7 +39,8 @@ void AgentModel::renumber(IndexList& list)
 
 AgentModel::AgentIndexPtr
 AgentModel::findOrInsertNode(IndexList& list, NodeType nodeType, AgentIndexPtr parent,
-                             const std::string& text, const qmf::Agent& agent, QModelIndex parentIndex)
+                             const std::string& text, const qmf::Agent& agent, QModelIndex parentIndex,
+                             IndexList::iterator& listPosition)
 {
     AgentIndexPtr node;
     int rowCount;
@@ -73,6 +74,12 @@ AgentModel::findOrInsertNode(IndexList& list, NodeType nodeType, AgentIndexPtr p
     } else
         node = *iter;
 
+    for (iter = list.begin(); iter != list.end(); iter++)
+        if ((*iter)->text == insertText) {
+            listPosition = iter;
+            break;
+        }
+
     return node;
 }
 
@@ -82,18 +89,62 @@ void AgentModel::addAgent(const qmf::Agent& agent)
     const std::string& vendor(agent.getVendor());
     const std::string& product(agent.getProduct());
     const std::string& instance(agent.getInstance());
+    IndexList::iterator unused;
 
     AgentIndexPtr vptr(findOrInsertNode(vendors, NODE_VENDOR, AgentIndexPtr(),
-                                        vendor, agent, QModelIndex()));
+                                        vendor, agent, QModelIndex(), unused));
     AgentIndexPtr pptr(findOrInsertNode(vptr->children, NODE_PRODUCT, vptr,
-                                        product, agent, createIndex(vptr->row, 0, vptr->id)));
+                                        product, agent, createIndex(vptr->row, 0, vptr->id), unused));
     AgentIndexPtr iptr(findOrInsertNode(pptr->children, NODE_INSTANCE, pptr,
-                                        instance, agent, createIndex(pptr->row, 0, pptr->id)));
+                                        instance, agent, createIndex(pptr->row, 0, pptr->id), unused));
 }
 
 
-void AgentModel::delAgent(const qmf::Agent&)
+void AgentModel::delAgent(const qmf::Agent& agent)
 {
+    const std::string& vendor(agent.getVendor());
+    const std::string& product(agent.getProduct());
+    const std::string& instance(agent.getInstance());
+    IndexList::iterator viter;
+    IndexList::iterator piter;
+    IndexList::iterator iiter;
+
+    AgentIndexPtr vptr(findOrInsertNode(vendors, NODE_VENDOR, AgentIndexPtr(), vendor, agent, QModelIndex(), viter));
+
+    QModelIndex pindex(createIndex(vptr->row, 0, vptr->id));
+    AgentIndexPtr pptr(findOrInsertNode(vptr->children, NODE_PRODUCT, vptr, product, agent, pindex, piter));
+
+    QModelIndex iindex(createIndex(pptr->row, 0, pptr->id));
+    AgentIndexPtr iptr(findOrInsertNode(pptr->children, NODE_INSTANCE, pptr, instance, agent, iindex, iiter));
+
+    beginRemoveRows(iindex, iptr->row, iptr->row);
+    pptr->children.erase(iiter);
+    linkage.erase(linkage.find(iptr->id));
+    renumber(pptr->children);
+    endRemoveRows();
+
+    if (pptr->children.size() == 0) {
+        beginRemoveRows(pindex, pptr->id, pptr->id);
+        vptr->children.erase(piter);
+        linkage.erase(linkage.find(pptr->id));
+        renumber(vptr->children);
+        endRemoveRows();
+
+        if (vptr->children.size() == 0) {
+            beginRemoveRows(QModelIndex(), vptr->row, vptr->row);
+            vendors.erase(viter);
+            linkage.erase(linkage.find(vptr->id));
+            renumber(vendors);
+            endRemoveRows();
+        }
+    }
+}
+
+
+void AgentModel::clear()
+{
+    vendors.clear();
+    linkage.clear();
 }
 
 

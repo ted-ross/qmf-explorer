@@ -54,7 +54,6 @@ QmfExplorer::QmfExplorer(QMainWindow* parent) : QMainWindow(parent)
     // Create the thread object that maintains communication with the messaging plane.
     //
     qmf = new QmfThread(this, agentModel, lineEdit_agent_filter, objectModel);
-    qmf->start();
 
     //
     // Linkage for the menu and the Connection Status label.
@@ -79,12 +78,22 @@ QmfExplorer::QmfExplorer(QMainWindow* parent) : QMainWindow(parent)
     connect(agentModel, SIGNAL(instSelected(qmf::Agent)), agentDetail, SLOT(newAgent(qmf::Agent)));
 
     //
+    // Linkage for Object tab components
+    //
+    connect(qmf, SIGNAL(newPackage(QString)), objectModel, SLOT(addPackage(QString)));
+
+    //
     // Create linkages to enable and disable main-window components based on the connection status.
     //
     connect(qmf, SIGNAL(isConnected(bool)), tabWidget,            SLOT(setEnabled(bool)));
     connect(qmf, SIGNAL(isConnected(bool)), actionOpen_Localhost, SLOT(setDisabled(bool)));
     connect(qmf, SIGNAL(isConnected(bool)), actionOpen,           SLOT(setDisabled(bool)));
     connect(qmf, SIGNAL(isConnected(bool)), actionClose,          SLOT(setEnabled(bool)));
+
+    //
+    // Start the QMF thread.
+    //
+    qmf->start();
 }
 
 

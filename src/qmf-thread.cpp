@@ -80,14 +80,34 @@ void QmfThread::run()
     while(true) {
         if (connected) {
             qmf::ConsoleEvent event;
+            uint32_t pcount;
+
             if (sess.nextEvent(event, qpid::messaging::Duration::SECOND)) {
                 //
                 // Process the event
                 //
                 switch (event.getType()) {
-                case qmf::CONSOLE_AGENT_ADD : emit newAgent(event.getAgent()); break;
-                case qmf::CONSOLE_AGENT_DEL : emit delAgent(event.getAgent()); break;
-                default: break;
+                case qmf::CONSOLE_AGENT_ADD :
+                    emit newAgent(event.getAgent());
+                    event.getAgent().querySchemaAsync();
+                    break;
+
+                case qmf::CONSOLE_AGENT_DEL :
+                    emit delAgent(event.getAgent());
+                    break;
+
+                case qmf::CONSOLE_AGENT_SCHEMA_UPDATE :
+                    event.getAgent().querySchemaAsync();
+                    break;
+
+                case qmf::CONSOLE_AGENT_SCHEMA_RESPONSE :
+                    pcount = event.getAgent().getPackageCount();
+                    for (uint32_t idx = 0; idx < pcount; idx++)
+                        emit newPackage(QString(event.getAgent().getPackage(idx).c_str()));
+                    break;
+
+                default :
+                    break;
                 }
             }
 

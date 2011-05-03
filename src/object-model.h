@@ -22,6 +22,7 @@
 #include <QAbstractItemModel>
 #include <QModelIndex>
 #include <QMutex>
+#include <QStringList>
 #include <qmf/Data.h>
 #include <sstream>
 #include <string>
@@ -46,6 +47,8 @@ public:
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
 
 public slots:
+    void addPackage(const QString&);
+    void addClass(const QStringList&);
     void addObject(const qmf::Data&);
     void delObject(const qmf::Data&);
     void clear();

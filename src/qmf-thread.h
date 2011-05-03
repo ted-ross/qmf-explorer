@@ -49,6 +49,7 @@ signals:
     void isConnected(bool);
     void newAgent(const qmf::Agent&);
     void delAgent(const qmf::Agent&);
+    void newPackage(const QString&);
 
 protected:
     void run();

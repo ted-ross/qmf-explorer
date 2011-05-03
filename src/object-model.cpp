@@ -86,6 +86,27 @@ ObjectModel::findOrInsertNode(IndexList& list, NodeType nodeType, ObjectIndexPtr
 }
 
 
+void ObjectModel::addPackage(const QString& package)
+{
+    cout << "[ObjectModel::addPackage] package=" << package.toStdString() << endl;
+    IndexList::iterator unused;
+    findOrInsertNode(packages, NODE_PACKAGE, ObjectIndexPtr(), package.toStdString(), qmf::Data(), QModelIndex(), unused);
+}
+
+
+void ObjectModel::addClass(const QStringList& list)
+{
+    std::string package(list.at(0).toStdString());
+    std::string schema(list.at(1).toStdString());
+    IndexList::iterator unused;
+
+    ObjectIndexPtr pptr(findOrInsertNode(packages, NODE_PACKAGE, ObjectIndexPtr(),
+                                         package, qmf::Data(), QModelIndex(), unused));
+    findOrInsertNode(pptr->children, NODE_SCHEMA, pptr,
+                     schema, qmf::Data(), createIndex(pptr->row, 0, pptr->id), unused);
+}
+
+
 void ObjectModel::addObject(const qmf::Data& object)
 {
     const qmf::SchemaId& schemaId(object.getSchemaId());
@@ -101,8 +122,8 @@ void ObjectModel::addObject(const qmf::Data& object)
                                          package, object, QModelIndex(), unused));
     ObjectIndexPtr sptr(findOrInsertNode(pptr->children, NODE_SCHEMA, pptr,
                                          schema, object, createIndex(pptr->row, 0, pptr->id), unused));
-    ObjectIndexPtr iptr(findOrInsertNode(sptr->children, NODE_INSTANCE, sptr,
-                                         instance, object, createIndex(sptr->row, 0, sptr->id), unused));
+    findOrInsertNode(sptr->children, NODE_INSTANCE, sptr,
+                     instance, object, createIndex(sptr->row, 0, sptr->id), unused);
 }
 
 
